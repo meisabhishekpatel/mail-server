@@ -1,65 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Email Viewer</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    .email {
-      border: 1px solid #ddd;
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 5px;
-    }
-    .email h4 {
-      margin: 0;
-      color: #333;
-    }
-    .email p {
-      margin: 5px 0;
-    }
-  </style>
-</head>
-<body>
-  <h1>Inbox</h1>
-  <div id="emails"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Viewer</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .email {
+        border: 1px solid #ddd;
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .email h4 {
+        margin: 0;
+        color: #333;
+      }
+      .email p {
+        margin: 5px 0;
+      }
+      .email .text-content {
+        white-space: pre-wrap; /* To preserve spaces, line breaks in plain text */
+      }
+      .email .html-content {
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Inbox</h1>
+    <div id="emails"></div>
 
-  <script>
-    const socket = io();
+    <script>
+      const socket = io();
 
-    // Display emails in the DOM
-    function displayEmails(emails) {
-      const emailContainer = document.getElementById('emails');
-      emailContainer.innerHTML = '';
-      emails.forEach(email => {
-        const emailDiv = document.createElement('div');
-        emailDiv.classList.add('email');
-        emailDiv.innerHTML = `
+      // Display emails in the DOM
+      function displayEmails(emails) {
+        const emailContainer = document.getElementById("emails");
+        emailContainer.innerHTML = ""; // Clear the container
+
+        emails.forEach((email) => {
+          const emailDiv = document.createElement("div");
+          emailDiv.classList.add("email");
+
+          // Email Structure
+          emailDiv.innerHTML = `
           <h4>${email.subject}</h4>
           <p><strong>From:</strong> ${email.from}</p>
           <p><strong>To:</strong> ${email.to}</p>
-          <p>${email.text}</p>
+          <div class="text-content">
+            <p><strong>Text content:</strong></p>
+            <pre>${email.text}</pre>
+          </div>
+          <div class="html-content">
+            <p><strong>HTML content:</strong></p>
+            <div>${email.html}</div>
+          </div>
         `;
-        emailContainer.appendChild(emailDiv);
-      });
-    }
 
-    // Fetch existing emails when the page loads
-    fetch('/emails')
-      .then(res => res.json())
-      .then(displayEmails);
+          emailContainer.appendChild(emailDiv);
+        });
+      }
 
-    // Listen for real-time updates
-    socket.on('newEmail', email => {
-      fetch('/emails')
-        .then(res => res.json())
+      // Fetch existing emails when the page loads
+      fetch("/emails")
+        .then((res) => res.json())
         .then(displayEmails);
-    });
-  </script>
-</body>
+
+      // Listen for real-time updates via WebSocket
+      socket.on("newEmail", (email) => {
+        fetch("/emails")
+          .then((res) => res.json())
+          .then(displayEmails);
+      });
+    </script>
+  </body>
 </html>
