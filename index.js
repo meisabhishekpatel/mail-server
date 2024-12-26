@@ -1,6 +1,9 @@
 const { SMTPServer } = require("smtp-server");
 const simpleParser = require("mailparser").simpleParser;
 
+// Store emails in memory (you can use a database instead)
+const emails = [];
+
 // Create SMTP Server
 const server = new SMTPServer({
   // Allow insecure connections for testing
@@ -29,11 +32,18 @@ const server = new SMTPServer({
   onData(stream, session, callback) {
     simpleParser(stream)
       .then((parsed) => {
-        console.log("Subject:", parsed.subject);
-        console.log("From:", parsed.from.text);
-        console.log("To:", parsed.to.text);
-        console.log("Text:", parsed.text);
-        console.log("HTML:", parsed.html);
+        const email = {
+          from: parsed.from.text,
+          to: parsed.to.text,
+          subject: parsed.subject,
+          text: parsed.text,
+          html: parsed.html,
+        };
+        emails.push(email); // Save the email in memory
+        console.log("Received email:", email);
+
+        // Notify the web app about the new email
+        io.emit("newEmail", email); // Send real-time updates using Socket.io
       })
       .catch((err) => console.error("Parsing error:", err))
       .finally(() => {
@@ -52,3 +62,5 @@ const PORT = 25;
 server.listen(PORT, () => {
   console.log(`SMTP server running on port ${PORT}`);
 });
+
+module.exports = { emails };
